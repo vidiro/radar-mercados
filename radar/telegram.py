@@ -69,8 +69,19 @@ class Bot:
         if not self.enabled:
             return 0
         try:
+            me = self._call("getMe")
+            log.info("Bot de Telegram: @%s · chat autorizado: %s", me.get("username"),
+                     "sí" if self.chat_id else "todavía no (escribe /start al bot)")
+            try:
+                wh = self._call("getWebhookInfo")
+                if wh.get("url"):
+                    log.info("El bot tenía un webhook; se elimina para poder leer mensajes")
+                    self._call("deleteWebhook")
+            except Exception:  # noqa: BLE001
+                pass
             updates = self._call("getUpdates", offset=self.state.get("tg_offset", 0) + 1, timeout=0,
                                  allowed_updates=["message"])
+            log.info("Mensajes nuevos recibidos por el bot: %d", len(updates))
         except Exception as e:  # noqa: BLE001
             log.error("Telegram getUpdates: %s", e)
             return 0
