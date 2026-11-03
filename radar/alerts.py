@@ -1,6 +1,7 @@
 """Reglas de alerta con memoria (no repite el mismo aviso) y textos para Telegram."""
 from __future__ import annotations
 
+import html
 import logging
 from datetime import date, datetime, timedelta
 
@@ -221,11 +222,11 @@ class Alerter:
             txt = (f"📐 {ic} <b>{a.cfg['name']}: {minus(meta['nombre'])} ({lado})</b>"
                    + ("\n⭐ <b>Confluencia</b>: el entorno macro también es " + reg.lower() if conf else
                       f"\n⚠️ Ojo: el entorno macro es {reg.lower()}, va en contra" if contra else "")
-                   + f"\n{e.detalle}"
+                   + f"\n{html.escape(e.detalle)}"
                    + f"\n📊 En el histórico de {a.cfg['name']}: {st.get(f'acierto{H_PRINCIPAL}', 0):.0f}% de acierto a "
                      f"{H_PRINCIPAL} días ({st.get(f'n{H_PRINCIPAL}', 0)} casos), movimiento medio a favor "
                      f"{fmt_pct(st.get(f'media{H_PRINCIPAL}'))} · señal {st['grado']}"
-                   + f"\n💡 {meta['idea']}"
+                   + f"\n💡 {html.escape(meta['idea'])}"
                    + (f"\n🎯 Soporte {_fmt(sop)} · Resistencia {_fmt(res)}" if sop and res else ""))
             self.fire(f"tec:{k}:{e.tipo}:{e.dir}:{e.fecha.date()}", txt, nivel="alta" if conf else "info")
 

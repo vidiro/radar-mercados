@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 
 import requests
 
@@ -56,14 +57,20 @@ class Bot:
         if not (self.enabled and cid):
             log.info("Telegram no configurado; mensaje:\n%s", text)
             return False
-        try:
-            for chunk in _chunks(text):
+        ok = True
+        for chunk in _chunks(text):
+            try:
                 self._call("sendMessage", chat_id=cid, text=chunk, parse_mode="HTML",
                            disable_web_page_preview=True)
-            return True
-        except Exception as e:  # noqa: BLE001
-            log.error("Error enviando a Telegram: %s", e)
-            return False
+            except Exception as e:  # noqa: BLE001 - si el HTML no es válido, se reenvía como texto plano
+                log.warning("Telegram rechazó el HTML (%s); reenvío como texto plano", e)
+                try:
+                    plano = re.sub(r"</?(b|i|a)( [^>]*)?>", "", chunk)
+                    self._call("sendMessage", chat_id=cid, text=plano, disable_web_page_preview=True)
+                except Exception as e2:  # noqa: BLE001
+                    log.error("Error enviando a Telegram: %s", e2)
+                    ok = False
+        return ok
 
     def process_commands(self, snap: dict, panel_url: str | None) -> int:
         if not self.enabled:
