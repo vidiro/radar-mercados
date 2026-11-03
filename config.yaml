@@ -1,0 +1,149 @@
+# ============================================================
+#  RADAR DE MERCADOS · configuración
+#  Para añadir un activo nuevo: añade su serie de precio en
+#  `series` y un bloque en `assets` con sus factores.
+# ============================================================
+
+settings:
+  timezone: Europe/Madrid
+  resumen_diario_hora: 8          # hora local del resumen diario por Telegram
+  historia_anios: 6               # años de histórico que se descargan
+  ventana_z_dias: 730             # ventana (días naturales, ~2 años) para normalizar
+  umbral_favorable: 25            # puntuación >= esto -> Favorable
+  umbral_fuerte: 50               # |puntuación| >= esto -> señal fuerte
+
+# ------------------------------------------------------------
+#  Catálogo de series. source: fred | yahoo | coinmetrics |
+#  defillama_stables | fng | deribit_funding | cftc_cot | derived
+#  `fallback` se usa si la fuente principal falla.
+# ------------------------------------------------------------
+series:
+  # --- Tipos y bonos (EE. UU.)
+  real10:   {source: fred, id: DFII10, name: "Rendimiento real 10A (TIPS)", unit: "%"}
+  us10:     {source: fred, id: DGS10, name: "Bono EE. UU. 10A", unit: "%"}
+  us2:      {source: fred, id: DGS2, name: "Bono EE. UU. 2A", unit: "%"}
+  curva:    {source: fred, id: T10Y2Y, name: "Curva 10A-2A", unit: "pp"}
+  be5y5:    {source: fred, id: T5YIFR, name: "Inflación esperada 5y5y", unit: "%"}
+  # --- Liquidez
+  walcl:    {source: fred, id: WALCL, name: "Balance Fed", unit: "M$", hidden: true}
+  tga:      {source: fred, id: WTREGEN, name: "Cuenta del Tesoro (TGA)", unit: "M$", hidden: true}
+  rrp:      {source: fred, id: RRPONTSYD, name: "Repos inversos (RRP)", unit: "mm$", hidden: true}
+  liq_net:  {source: derived, formula: net_liquidity, name: "Liquidez neta Fed", unit: "mm$"}
+  m2:       {source: fred, id: M2SL, name: "Masa monetaria M2", unit: "mm$"}
+  # --- Inflación
+  cpi:      {source: fred, id: CPIAUCSL, name: "IPC EE. UU.", unit: "índice"}
+  pce:      {source: fred, id: PCEPILFE, name: "PCE subyacente", unit: "índice"}
+  # --- Riesgo / condiciones financieras
+  vix:      {source: fred, id: VIXCLS, name: "VIX (miedo bolsa)", unit: "pts"}
+  hy:       {source: fred, id: BAMLH0A0HYM2, name: "Diferencial High Yield", unit: "%"}
+  nfci:     {source: fred, id: NFCI, name: "Condiciones financieras (NFCI)", unit: "índice"}
+  nasdaq:   {source: fred, id: NASDAQCOM, name: "Nasdaq Composite", unit: "pts"}
+  # --- Dólar
+  dxy:      {source: yahoo, id: "DX-Y.NYB", name: "Índice dólar (DXY)", unit: "pts",
+             fallback: {source: fred, id: DTWEXBGS}}
+  # --- Materias primas
+  gold:     {source: yahoo, id: "GC=F", name: "Oro (futuro)", unit: "$/oz",
+             fallback: {source: coinmetrics, id: paxg, metric: PriceUSD}}
+  silver:   {source: yahoo, id: "SI=F", name: "Plata", unit: "$/oz", optional: true}
+  copper:   {source: yahoo, id: "HG=F", name: "Cobre", unit: "$/lb", optional: true}
+  cu_au:    {source: derived, formula: copper_gold, name: "Ratio cobre/oro", unit: "x1000", optional: true}
+  au_ag:    {source: derived, formula: gold_silver, name: "Ratio oro/plata", unit: "x", optional: true}
+  cot_gold: {source: cftc_cot, id: "088691", name: "Posición neta especuladores oro", unit: "% OI"}
+  # --- Bitcoin
+  btc:      {source: coinmetrics, id: btc, metric: PriceUSD, name: "Bitcoin", unit: "$", live: deribit}
+  mvrv:     {source: coinmetrics, id: btc, metric: CapMVRVCur, name: "MVRV (valoración on-chain)", unit: "x"}
+  hashrate: {source: coinmetrics, id: btc, metric: HashRate, name: "Hashrate", unit: "TH/s", optional: true}
+  exch_in:  {source: coinmetrics, id: btc, metric: FlowInExNtv, name: "BTC entrando a exchanges", unit: "BTC/día", optional: true}
+  funding:  {source: deribit_funding, id: BTC-PERPETUAL, name: "Funding perpetuos (anualizado)", unit: "%"}
+  stables:  {source: defillama_stables, name: "Oferta de stablecoins", unit: "$"}
+  fng:      {source: fng, name: "Fear & Greed cripto", unit: "0-100"}
+
+# ------------------------------------------------------------
+#  Activos y sus factores.
+#  transform:
+#    chg     -> cambio absoluto en `dias`, normalizado (z-score)
+#    pct     -> cambio % en `dias`, normalizado
+#    level   -> nivel actual normalizado
+#    yoy     -> crecimiento interanual normalizado
+#    trend   -> precio vs medias 50/200 (momentum)
+#    band    -> (valor - centro) / ancho  (umbrales fijos)
+#  signo: +1 si sube el factor es bueno para el activo, -1 si es malo.
+#  lag: días que se retrasa el factor (efecto con retardo).
+#  peso: 0 -> se muestra como CONTEXTO pero no entra en la puntuación
+#        (p. ej. valoración on-chain, útil a largo plazo pero no a 1-4 semanas).
+# ------------------------------------------------------------
+assets:
+  btc:
+    name: Bitcoin
+    symbol: BTC
+    price: btc
+    color: "#F7931A"
+    factors:
+      - {serie: liq_net, transform: chg, dias: 28, signo: 1, peso: 2.0, grupo: Liquidez,
+         porque: "Más dólares en el sistema (balance Fed − TGA − RRP) empujan los activos de riesgo; el BTC es de los más sensibles."}
+      - {serie: m2, transform: yoy, signo: 1, peso: 1.0, lag: 70, grupo: Liquidez,
+         porque: "El BTC ha seguido al crecimiento de M2 con ~10 semanas de retraso."}
+      - {serie: stables, transform: pct, dias: 30, signo: 1, peso: 1.5, grupo: Liquidez,
+         porque: "Más stablecoins = más 'pólvora seca' dentro del ecosistema cripto."}
+      - {serie: dxy, transform: pct, dias: 28, signo: -1, peso: 1.5, grupo: Dólar y tipos,
+         porque: "Dólar fuerte endurece las condiciones globales y presiona al BTC."}
+      - {serie: real10, transform: chg, dias: 28, signo: -1, peso: 1.0, grupo: Dólar y tipos,
+         porque: "Subidas del tipo real encarecen el dinero y castigan activos sin flujo de caja."}
+      - {serie: hy, transform: chg, dias: 28, signo: -1, peso: 1.0, grupo: Riesgo,
+         porque: "Si se amplía el diferencial de crédito basura, el mercado huye del riesgo."}
+      - {serie: vix, transform: level, signo: -1, peso: 0.75, grupo: Riesgo,
+         porque: "VIX alto = estrés en bolsa; el BTC suele caer con el Nasdaq."}
+      - {serie: nasdaq, nombre: "Tendencia Nasdaq", transform: trend, signo: 1, peso: 1.0, grupo: Riesgo,
+         porque: "El BTC cotiza muy correlacionado con la tecnología estadounidense."}
+      - {serie: funding, transform: level, signo: -1, peso: 1.0, grupo: Posicionamiento,
+         porque: "Funding muy alto = exceso de apalancamiento alcista, riesgo de liquidaciones."}
+      - {serie: fng, transform: band, centro: 50, ancho: 20, signo: -1, peso: 0, grupo: Posicionamiento,
+         porque: "Contrarian: miedo extremo suele ser oportunidad; codicia extrema, riesgo."}
+      - {serie: exch_in, transform: level, signo: -1, peso: 0.5, grupo: On-chain, suavizado: 7,
+         porque: "Mucho BTC entrando a exchanges suele anticipar ventas."}
+      - {serie: mvrv, transform: band, centro: 1.8, ancho: 0.7, signo: -1, peso: 0, grupo: On-chain,
+         porque: "MVRV > 3 históricamente caro, < 1 barato."}
+      - {serie: btc, nombre: "Tendencia del BTC", transform: trend, signo: 1, peso: 1.5, grupo: Tendencia,
+         porque: "Momentum: precio sobre medias de 50 y 200 días."}
+
+  gold:
+    name: Oro
+    symbol: XAU
+    price: gold
+    color: "#D4AF37"
+    factors:
+      - {serie: real10, transform: chg, dias: 28, signo: -1, peso: 2.0, grupo: Dólar y tipos,
+         porque: "El coste de oportunidad del oro: si el tipo real baja, el oro gana atractivo."}
+      - {serie: dxy, transform: pct, dias: 28, signo: -1, peso: 1.5, grupo: Dólar y tipos,
+         porque: "El oro cotiza en dólares: dólar débil, oro fuerte."}
+      - {serie: us2, transform: chg, dias: 28, signo: -1, peso: 1.0, grupo: Dólar y tipos,
+         porque: "El 2 años refleja lo que el mercado espera de la Fed: bajadas de tipos favorecen al oro."}
+      - {serie: be5y5, transform: chg, dias: 28, signo: 1, peso: 0.5, grupo: Inflación,
+         porque: "Más inflación esperada refuerza al oro como cobertura."}
+      - {serie: liq_net, transform: chg, dias: 28, signo: 1, peso: 0, grupo: Liquidez,
+         porque: "Más liquidez y devaluación monetaria sostienen al oro."}
+      - {serie: vix, transform: level, signo: 1, peso: 0.5, grupo: Riesgo,
+         porque: "En momentos de estrés el oro actúa de refugio."}
+      - {serie: hy, transform: chg, dias: 28, signo: 1, peso: 0.5, grupo: Riesgo,
+         porque: "Tensión crediticia = demanda de activos refugio."}
+      - {serie: cu_au, transform: pct, dias: 28, signo: -1, peso: 0, grupo: Riesgo,
+         porque: "Si el cobre gana al oro, el mercado está en modo 'crecimiento', no refugio."}
+      - {serie: cot_gold, transform: level, signo: -1, peso: 1.0, grupo: Posicionamiento,
+         porque: "Contrarian: especuladores muy cargados = poco comprador marginal restante."}
+      - {serie: gold, nombre: "Tendencia del oro", transform: trend, signo: 1, peso: 1.5, grupo: Tendencia,
+         porque: "Momentum: precio sobre medias de 50 y 200 días."}
+
+# ------------------------------------------------------------
+#  Alertas (umbrales). Pon `activa: false` para desactivar.
+# ------------------------------------------------------------
+alerts:
+  cambio_regimen:     {activa: true}
+  puntuacion_fuerte:  {activa: true}
+  cruce_media_200:    {activa: true}
+  movimiento_extremo: {activa: true, sigmas: 2.5}
+  divergencia:        {activa: true, dias: 28}
+  liquidez_giro:      {activa: true, z: 1.5, enfriamiento_dias: 7}
+  tipo_real_brusco:   {activa: true, z: 2.0, enfriamiento_dias: 5}
+  funding_extremo:    {activa: true, alto: 30, bajo: -5, enfriamiento_dias: 3}
+  miedo_codicia:      {activa: true, miedo: 15, codicia: 85, enfriamiento_dias: 3}
+  dxy_brusco:         {activa: true, z: 2.0, enfriamiento_dias: 5}
