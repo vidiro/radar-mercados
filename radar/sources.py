@@ -212,3 +212,47 @@ def cftc_cot(code: str, start: str) -> pd.Series:
     net = (df["m_money_positions_long_all"] - df["m_money_positions_short_all"]) / df["open_interest_all"] * 100
     net.index = pd.to_datetime(df["report_date_as_yyyy_mm_dd"])
     return _clean(net, f"cot_{code}")
+
+
+# ---------------------------------------------------------------- Velas (OHLCV)
+def coinbase_ohlc(product: str, start: str) -> pd.DataFrame:
+    """Velas diarias de Coinbase (máx. 300 por petición)."""
+    rows = []
+    t0 = pd.Timestamp(start, tz="UTC")
+    end = pd.Timestamp.utcnow()
+    while t0 < end:
+        t1 = min(t0 + pd.Timedelta(days=299), end)
+        r = _get(f"https://api.exchange.coinbase.com/products/{product}/candles",
+                 {"granularity": 86400, "start": t0.isoformat(), "end": t1.isoformat()})
+        rows += r.json()
+        t0 = t1 + pd.Timedelta(days=1)
+    df = pd.DataFrame(rows, columns=["t", "low", "high", "open", "close", "volume"])
+    df.index = pd.to_datetime(df.t, unit="s")
+    df = df[~df.index.duplicated()].sort_index().drop(columns="t")
+    return df.astype(float)
+
+
+def yahoo_ohlc(ticker: str, start: str) -> pd.DataFrame:
+    p1 = int(pd.Timestamp(start).timestamp())
+    p2 = int(time.time()) + 86400
+    for host in ("query2", "query1"):
+        try:
+            r = _get(f"https://{host}.finance.yahoo.com/v8/finance/chart/{ticker}",
+                     {"period1": p1, "period2": p2, "interval": "1d"}, tries=2, headers=UA)
+            res = r.json()["chart"]["result"][0]
+            q = res["indicators"]["quote"][0]
+            df = pd.DataFrame({k: q[k] for k in ("open", "high", "low", "close", "volume")},
+                              index=pd.to_datetime(res["timestamp"], unit="s").normalize())
+            return df.dropna(subset=["close"]).astype(float)
+        except Exception as e:  # noqa: BLE001
+            log.info("yahoo OHLC %s via %s falló: %s", ticker, host, e)
+    import yfinance as yf
+
+    df = yf.download(ticker, start=start, progress=False, auto_adjust=False)
+    if df is None or df.empty:
+        raise RuntimeError(f"yahoo sin velas para {ticker}")
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+    df = df.rename(columns=str.lower)[["open", "high", "low", "close", "volume"]]
+    df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
+    return df.dropna(subset=["close"]).astype(float)

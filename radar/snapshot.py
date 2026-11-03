@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .engine import AssetResult, DataSet, backtest, regime
+from . import technical as T
 
 HIST_DAYS = 365 * 4
 
@@ -119,6 +120,7 @@ def build(ds: DataSet, assets: dict[str, AssetResult], cfg: dict, state: dict) -
             "factores": facs, "validacion": backtest(a, cfg),
             "historia": {"precio": _series_payload(a.price), "puntuacion": _series_payload(a.score),
                          "ma200": _series_payload(ma200)},
+            "tecnico": tecnico_payload(a),
         }
     for key, spec in cfg["series"].items():
         if spec.get("hidden") or key not in ds.raw:
@@ -134,3 +136,29 @@ def build(ds: DataSet, assets: dict[str, AssetResult], cfg: dict, state: dict) -
             "hist": _series_payload(s.resample("1D").last().dropna(), HIST_DAYS, 2),
         }
     return out
+
+
+def tecnico_payload(a: AssetResult) -> dict | None:
+    R = a.tecnico
+    if R is None:
+        return None
+    desde = R.df.index[-1] - pd.DateOffset(years=4)
+    eventos = [T.evento_dict(e, R.stats) for e in R.eventos if e.fecha >= desde]
+    tabla = []
+    for tipo, meta in T.CATALOGO.items():
+        for d in (1, -1):
+            st = R.stats.get(f"{tipo}:{d}", {})
+            if not st.get("n"):
+                continue
+            tabla.append({"tipo": tipo, "dir": d, "nombre": meta["nombre"], "familia": meta["tipo"], "idea": meta["idea"],
+                          "n": st["n"], "grado": st["grado"],
+                          **{k: st.get(k) for k in ("acierto5", "acierto10", "acierto20", "media5", "media10", "media20",
+                                                     "ventaja10")}})
+    orden = {"fiable": 0, "media": 1, "pocos casos": 2, "no fiable": 3}
+    tabla.sort(key=lambda r: (orden.get(r["grado"], 9), -(r.get("acierto10") or 0)))
+    momentos = [{**m, "explicacion": T.explicar_momento(m, a.key)} for m in R.momentos]
+    return {"lectura": R.lectura, "niveles": R.niveles, "cobertura": R.cobertura, "tabla": tabla,
+            "eventos": eventos, "momentos": momentos,
+            "velas": {"t": [d.strftime("%Y-%m-%d") for d in R.df.index[-800:]],
+                      "o": [_f(x, 2) for x in R.df.open.values[-800:]], "h": [_f(x, 2) for x in R.df.high.values[-800:]],
+                      "l": [_f(x, 2) for x in R.df.low.values[-800:]], "c": [_f(x, 2) for x in R.df.close.values[-800:]]}}

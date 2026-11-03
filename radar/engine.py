@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import sources
+from . import sources, technical
 
 log = logging.getLogger("radar")
 FFILL_LIMIT = 100  # días máximos que se arrastra un dato semanal/mensual
@@ -20,6 +20,41 @@ FFILL_LIMIT = 100  # días máximos que se arrastra un dato semanal/mensual
 class DataSet:
     raw: dict[str, pd.Series] = field(default_factory=dict)
     status: dict[str, dict] = field(default_factory=dict)
+    ohlc: dict[str, pd.DataFrame] = field(default_factory=dict)
+
+
+def load_ohlc(cfg: dict, ds: "DataSet", start: str, cache_dir: Path | None) -> None:
+    """Velas diarias por activo para el análisis técnico (con caché y respaldo a solo cierres)."""
+    for k, a in cfg["assets"].items():
+        spec = a.get("ohlc")
+        df, fuente = None, ""
+        if spec:
+            try:
+                if spec["source"] == "coinbase":
+                    df = sources.coinbase_ohlc(spec["id"], start)
+                elif spec["source"] == "yahoo":
+                    df = sources.yahoo_ohlc(spec["id"], start)
+                fuente = f"{spec['source']}:{spec['id']}"
+            except Exception as e:  # noqa: BLE001
+                log.warning("Velas %s fallaron: %s", k, e)
+        f = Path(cache_dir) / f"ohlc_{k}.csv.gz" if cache_dir else None
+        if (df is None or df.empty) and f and f.exists():
+            df, fuente = pd.read_csv(f, index_col=0, parse_dates=True), "caché"
+        if (df is None or df.empty) and a["price"] in ds.raw:
+            p = ds.raw[a["price"]]
+            df = pd.DataFrame({"open": p, "high": p, "low": p, "close": p, "volume": 0.0})
+            fuente = "solo cierres"
+        if df is None or df.empty:
+            continue
+        df.index = pd.to_datetime(df.index).tz_localize(None).normalize()
+        today = pd.Timestamp.now("UTC").tz_localize(None).normalize()
+        df = df[df.index < today]  # solo velas cerradas
+        ds.ohlc[k] = df
+        ds.status[f"velas_{k}"] = {"ok": True, "fuente": fuente, "respaldo": fuente in ("caché", "solo cierres"),
+                                   "ultimo": df.index[-1].strftime("%Y-%m-%d")}
+        if f is not None and fuente not in ("caché",):
+            f.parent.mkdir(parents=True, exist_ok=True)
+            df.to_csv(f, float_format="%.6g")
 
 
 def _fetch(spec: dict, start: str, cm_metrics: dict[str, list[str]]) -> pd.Series:
@@ -224,6 +259,7 @@ class AssetResult:
     factors: list[FactorResult]
     score: pd.Series
     cobertura: pd.Series
+    tecnico: "technical.ResultadoTecnico | None" = None
 
 
 def compute_asset(key: str, acfg: dict, ds: DataSet, cfg: dict) -> AssetResult | None:
@@ -240,7 +276,13 @@ def compute_asset(key: str, acfg: dict, ds: DataSet, cfg: dict) -> AssetResult |
     score = (S.fillna(0).mul(w, axis=1).sum(axis=1) / avail.replace(0, np.nan)) * 50
     cobertura = avail / wtot
     score = score.where(cobertura >= 0.6)
-    return AssetResult(key, acfg, price, facs, score.round(1), cobertura)
+    tec = None
+    if key in ds.ohlc and len(ds.ohlc[key]) > 300:
+        try:
+            tec = technical.analizar(ds.ohlc[key])
+        except Exception as e:  # noqa: BLE001
+            log.error("Análisis técnico de %s falló: %s", key, e)
+    return AssetResult(key, acfg, price, facs, score.round(1), cobertura, tec)
 
 
 def regime(score: float, cfg: dict) -> str:
@@ -277,6 +319,9 @@ def backtest(a: AssetResult, cfg: dict, horizon: int = 28) -> dict:
 
 def run(cfg: dict, cache_dir: Path | None = None) -> tuple[DataSet, dict[str, AssetResult]]:
     ds = load_data(cfg, cache_dir)
+    years = cfg["settings"].get("historia_anios", 6)
+    start = (pd.Timestamp.today() - pd.DateOffset(years=years + 2)).strftime("%Y-%m-%d")
+    load_ohlc(cfg, ds, start, cache_dir)
     assets = {}
     for k, acfg in cfg["assets"].items():
         r = compute_asset(k, acfg, ds, cfg)
