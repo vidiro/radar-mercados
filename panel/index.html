@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RADAR//MERCADOS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>window.echarts||document.write('<script src="https://unpkg.com/echarts@5.5.1/dist/echarts.min.js"><\/script>')</script>
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#020604; --surface:rgba(4,16,9,.86); --surface-2:rgba(0,255,65,.06); --line:rgba(0,255,65,.18);
+  --text:#c8ffd8; --text-2:#7fe0a0; --muted:#3f9a5e;
+  --pos:#00e5ff; --neg:#ff2e88; --mid:#16301f;
+  --good:#39ff14; --critical:#ff2e88; --neutral:#6fa883;
+  --btc:#ff9e1b; --gold:#ffd60a; --accent:#00ff41;
+  --glow:0 0 6px rgba(0,255,65,.55),0 0 18px rgba(0,255,65,.25);
+  --shadow:0 0 0 1px rgba(0,255,65,.05),0 0 24px rgba(0,255,65,.06) inset;
+}
+:root[data-theme="light"],:root[data-theme="dark"]{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 "Share Tech Mono","JetBrains Mono",ui-monospace,monospace;-webkit-font-smoothing:antialiased;min-height:100vh}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+header h1{font-size:20px;margin:0;letter-spacing:-.01em}
+header .sub{color:var(--muted);font-size:13px}
+header .sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12px;color:var(--text-2);cursor:default}
+button.pill{cursor:pointer}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.grid-assets{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:18px}
+.asset{padding:16px 18px;cursor:pointer;transition:border-color .15s}
+.asset.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.asset .top{display:flex;align-items:baseline;gap:10px}
+.asset .name{font-weight:600;font-size:15px}
+.asset .sym{color:var(--muted);font-size:12px}
+.asset .px{margin-left:auto;font-size:20px;font-weight:600}
+.chg{display:flex;gap:6px;margin:8px 0 14px;flex-wrap:wrap}
+.chg span{font-size:12px;padding:2px 7px;border-radius:6px;background:var(--surface-2);color:var(--text-2)}
+.chg b{font-weight:600;color:var(--text)}
+.scorebox{display:flex;align-items:center;gap:14px}
+.score{font-size:34px;font-weight:700;letter-spacing:-.02em;min-width:72px}
+.gauge{flex:1}
+.gbar{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--neg) 0%,var(--mid) 50%,var(--pos) 100%);opacity:.85}
+.gbar .mk{position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;background:var(--text);box-shadow:0 0 0 2px var(--surface);transform:translateX(-2px)}
+.gaxis{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px}
+.regime{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;margin-top:10px}
+.regime .ic{font-size:13px}
+.regime small{font-weight:400;color:var(--muted)}
+.section-title{display:flex;align-items:center;gap:10px;margin:26px 0 10px}
+.section-title h2{font-size:15px;margin:0}
+.section-title .hint{color:var(--muted);font-size:12px}
+.chartcard{padding:14px 14px 6px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:8px;padding:2px}
+.seg button{border:0;background:transparent;color:var(--text-2);font:inherit;font-size:12px;padding:5px 10px;border-radius:6px;cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 0 0 1px var(--line)}
+#chart-main{height:440px}
+.two{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}
+@media (max-width:900px){.two{grid-template-columns:1fr}#chart-main{height:380px}}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tr.f{cursor:pointer}
+tr.f:hover td{background:var(--surface-2)}
+.fname{font-weight:500}
+.fgroup{font-size:11px;color:var(--muted)}
+.lect{color:var(--text-2);font-size:13px}
+.sig{width:150px}
+.sbar{position:relative;height:10px;background:var(--surface-2);border-radius:5px}
+.sbar .c{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--muted)}
+.sbar .v{position:absolute;top:0;bottom:0;border-radius:4px}
+.num{text-align:right;white-space:nowrap}
+.rel{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--text-2);white-space:nowrap}
+.why td{background:var(--surface-2);color:var(--text-2);font-size:13px;padding:12px 14px}
+.why .spark{height:70px;margin-top:8px}
+.tablewrap{overflow-x:auto}
+.ctx td{opacity:.8}
+.val{padding:16px 18px}
+.val table td,.val table th{padding:8px 6px}
+.val p{color:var(--text-2);font-size:13px;margin:10px 0 0}
+.macro{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,44vw),1fr));gap:10px}
+.section-title{flex-wrap:wrap}
+.mc{padding:12px 14px 6px;cursor:pointer}
+.mc .t{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc .v{font-size:18px;font-weight:600;margin-top:2px}
+.mc .d{font-size:11px;color:var(--muted)}
+.mc .sp{height:44px}
+.alerts{padding:6px 0}
+.al{padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px}
+.al:last-child{border-bottom:0}
+.al .when{font-size:11px;color:var(--muted);margin-bottom:3px}
+.empty{padding:18px;color:var(--muted);font-size:13px}
+details.status{margin-top:14px}
+details.status summary{cursor:pointer;color:var(--text-2);font-size:13px;padding:10px 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal.on{display:flex}
+.modal .card{width:min(980px,100%);padding:16px}
+.modal .hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.modal .hd h3{margin:0;font-size:15px}
+.modal .x{margin-left:auto;border:0;background:var(--surface-2);color:var(--text);border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer}
+#chart-modal{height:420px}
+footer{color:var(--muted);font-size:12px;margin-top:30px;line-height:1.6}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--text-2);flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+@media (max-width:600px){.sig{width:90px}.hide-sm{display:none}.score{font-size:28px}}
+
+/* ===== CYBERPUNK / MATRIX ===== */
+#rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.16}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:39;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.65) 100%)}
+.wrap{position:relative;z-index:1}
+.card{backdrop-filter:blur(2px);border-radius:4px;position:relative;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.card::before{content:"";position:absolute;top:0;left:0;width:22px;height:2px;background:var(--accent);box-shadow:var(--glow)}
+header h1{font-family:Orbitron,sans-serif;font-weight:800;font-size:22px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);text-shadow:var(--glow)}
+header h1 .gl{position:relative;display:inline-block}
+header h1 .gl::before,header h1 .gl::after{content:attr(data-t);position:absolute;left:0;top:0;opacity:.75;pointer-events:none}
+header h1 .gl::before{color:var(--pos);transform:translate(2px,0);clip-path:inset(0 0 55% 0);animation:gl1 3.2s infinite steps(1)}
+header h1 .gl::after{color:var(--neg);transform:translate(-2px,0);clip-path:inset(55% 0 0 0);animation:gl2 2.7s infinite steps(1)}
+@keyframes gl1{0%,92%,100%{transform:translate(0,0);opacity:0}93%{transform:translate(3px,-1px);opacity:.8}96%{transform:translate(-2px,1px);opacity:.8}}
+@keyframes gl2{0%,88%,100%{transform:translate(0,0);opacity:0}89%{transform:translate(-3px,1px);opacity:.8}94%{transform:translate(2px,0);opacity:.8}}
+header .sub::before{content:"> ";color:var(--accent)}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--accent);margin-left:4px;vertical-align:-2px;animation:blink 1s steps(1) infinite;box-shadow:var(--glow)}
+@keyframes blink{50%{opacity:0}}
+.pill{border-radius:2px;background:rgba(0,255,65,.05);border-color:var(--line);text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+.asset.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 22px rgba(0,255,65,.25)}
+.asset .name{font-family:Orbitron,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.asset .px{color:#eafff0;text-shadow:0 0 8px rgba(200,255,216,.35)}
+.score{font-family:Orbitron,sans-serif;text-shadow:0 0 10px currentColor}
+.gbar{background:linear-gradient(90deg,var(--neg) 0%,#2a0f1f 35%,var(--mid) 50%,#06303a 65%,var(--pos) 100%);opacity:1;border-radius:0;height:6px;box-shadow:0 0 10px rgba(0,229,255,.25)}
+.gbar .mk{background:#fff;box-shadow:0 0 8px #fff,0 0 0 2px #000;border-radius:0}
+.regime{text-transform:uppercase;letter-spacing:.1em;text-shadow:0 0 8px currentColor}
+.section-title h2{font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);text-shadow:var(--glow)}
+.section-title h2::before{content:"// ";color:var(--muted)}
+.seg{border-radius:2px;background:rgba(0,255,65,.05)}
+.seg button{border-radius:0;font-family:inherit;text-transform:uppercase}
+.seg button.on{background:var(--accent);color:#001a08;box-shadow:var(--glow)}
+th{color:var(--accent);opacity:.75}
+tr.f:hover td{background:rgba(0,255,65,.07)}
+.sbar{border-radius:0;background:rgba(0,255,65,.06)}
+.sbar .v{border-radius:0;box-shadow:0 0 8px currentColor}
+.rel{border-radius:2px;border-color:var(--line);text-transform:uppercase;font-size:10px;letter-spacing:.05em}
+.chg span{border-radius:2px;background:rgba(0,255,65,.06)}
+.mc:hover{border-color:var(--accent);box-shadow:0 0 16px rgba(0,255,65,.2)}
+.al{border-left:2px solid var(--accent)}
+.modal{background:rgba(0,0,0,.78)}
+.modal .x{border-radius:0;background:transparent;border:1px solid var(--line);color:var(--accent)}
+footer{border-top:1px dashed var(--line);padding-top:14px}
+::selection{background:var(--accent);color:#000}
+@media (prefers-reduced-motion:reduce){#rain{display:none}header h1 .gl::before,header h1 .gl::after,.cursor{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<div class="wrap">
+  <header>
+    <div>
+      <h1><span class="gl" data-t="RADAR//MERCADOS">RADAR//MERCADOS</span></h1>
+      <div class="sub" id="updated">Cargando…</div>
+    </div>
+    <div class="sp"></div>
+    <span class="pill" id="health"></span>
+    <button class="pill" id="theme" title="Activar o desactivar la lluvia de código">▦ Lluvia: ON</button>
+  </header>
+
+  <div class="grid-assets" id="assets"></div>
+
+  <div class="section-title"><h2 id="det-title">Detalle</h2><span class="hint">Precio y puntuación del entorno (−100 adverso · +100 favorable)</span></div>
+  <div class="card chartcard">
+    <div class="toolbar">
+      <div class="seg" id="range">
+        <button data-d="90">3M</button><button data-d="180">6M</button><button data-d="365" class="on">1A</button><button data-d="730">2A</button><button data-d="0">Todo</button>
+      </div>
+      <span style="flex:1"></span>
+      <div class="legend" id="legend-main"></div>
+    </div>
+    <div id="chart-main"></div>
+  </div>
+
+  <div class="two" style="margin-top:14px">
+    <div class="card">
+      <div class="tablewrap">
+        <table id="factors">
+          <thead><tr><th>Factor</th><th class="hide-sm">Lectura actual</th><th>Señal</th><th class="num">Aporte</th><th class="num hide-sm" title="¿Ha funcionado este factor los últimos 2 años?">Fiabilidad</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card val" id="validation"></div>
+    </div>
+  </div>
+
+  <div class="section-title"><h2>Macro y mercado</h2><span class="hint">Toca una tarjeta para ver el gráfico grande</span></div>
+  <div class="macro" id="macro"></div>
+
+  <div class="section-title"><h2>Últimas alertas</h2><span class="hint">Las mismas que te llegan por Telegram</span></div>
+  <div class="card alerts" id="alerts"></div>
+
+  <details class="status"><summary>Estado de las fuentes de datos</summary>
+    <div class="card tablewrap"><table id="status"><thead><tr><th>Serie</th><th>Fuente</th><th>Último dato</th><th>Estado</th></tr></thead><tbody></tbody></table></div>
+  </details>
+
+  <footer>
+    La puntuación combina factores normalizados (z-score de 2 años) con su signo esperado y su peso. Mide si el entorno
+    sopla a favor o en contra; <b>no es una predicción ni una recomendación de inversión</b>. La "fiabilidad" es la
+    correlación histórica de cada factor con la rentabilidad de las 4 semanas siguientes: sirve para saber en qué fiarse más.
+  </footer>
+</div>
+
+<div class="modal" id="modal"><div class="card"><div class="hd"><h3 id="modal-title"></h3><span class="sub mono" id="modal-sub" style="color:var(--muted);font-size:12px"></span><button class="x" id="modal-x">×</button></div><div id="chart-modal"></div></div></div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+const D = window.RADAR;
+if(!D){document.getElementById('updated').textContent='No hay datos todavía (data.js no encontrado).';return;}
+const $ = s => document.querySelector(s);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const nf = (x,d=0) => x==null||isNaN(x) ? '—' : Number(x).toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d});
+const auto = x => { if(x==null) return '—'; const a=Math.abs(x);
+  if(a>=1e12) return nf(x/1e12,2)+' B'; if(a>=1e9) return nf(x/1e9,1)+' mm'; if(a>=1e6) return nf(x/1e6,1)+' M';
+  return a>=1000?nf(x,0):a>=10?nf(x,1):nf(x,2); };
+const RATES = ['real10','us10','us2','curva','be5y5','hy'];
+const pct = x => x==null ? '—' : (x>=0?'+':'')+nf(x,1)+'%';
+const sgn = x => x==null ? '—' : (x>=0?'+':'')+nf(x,0);
+const REG = {Favorable:{ic:'▲',c:'--good'},Adverso:{ic:'▼',c:'--critical'},Neutral:{ic:'●',c:'--neutral'},'Sin datos':{ic:'?',c:'--muted'}};
+const keys = Object.keys(D.activos);
+let sel = (location.hash||'').slice(1); if(!keys.includes(sel)) sel = keys[0];
+let rangeDays = 365;
+const charts = [];
+
+// ---------- lluvia Matrix
+const cv = document.getElementById('rain'), cx = cv.getContext('2d');
+let rainOn = (()=>{try{return localStorage.getItem('radar-rain')!=='off'}catch(e){return true}})();
+const glyphs = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ0123456789$₿¥€Ξ<>/=+*'.split('');
+let cols=[], fs=16;
+function sizeRain(){ cv.width=innerWidth; cv.height=innerHeight; cols=Array(Math.ceil(cv.width/fs)).fill(0).map(()=>Math.random()*-50); }
+function drawRain(){
+  if(rainOn){ cx.fillStyle='rgba(2,6,4,.12)'; cx.fillRect(0,0,cv.width,cv.height); cx.font=fs+'px "Share Tech Mono", monospace';
+    cols.forEach((y,i)=>{ cx.fillStyle = Math.random()<.03 ? '#d8ffe4' : '#00ff41'; cx.fillText(glyphs[Math.random()*glyphs.length|0], i*fs, y*fs);
+      cols[i] = (y*fs>cv.height && Math.random()>.975) ? 0 : y+1; }); }
+  setTimeout(()=>requestAnimationFrame(drawRain), 55);
+}
+sizeRain(); addEventListener('resize', sizeRain);
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches) drawRain();
+const setRainBtn=()=>{ $('#theme').textContent='▦ Lluvia: '+(rainOn?'ON':'OFF'); cv.style.display=rainOn?'':'none'; };
+setRainBtn();
+$('#theme').onclick = () => { rainOn=!rainOn; try{localStorage.setItem('radar-rain',rainOn?'on':'off')}catch(e){} setRainBtn(); };
+
+// ---------- cabecera
+const gen = new Date(D.generado);
+const mins = Math.round((Date.now()-gen)/60000);
+$('#updated').innerHTML = 'SYNC ' + gen.toLocaleString('es-ES',{dateStyle:'medium',timeStyle:'short'}) + (mins<180? ` · hace ${mins} min`:'') + '<span class="cursor"></span>';
+const st = Object.values(D.estado_datos); const ok = st.filter(s=>s.ok && s.fuente!=='caché').length;
+const cache = st.filter(s=>s.fuente==='caché').length, bad = st.filter(s=>!s.ok).length;
+$('#health').innerHTML = `<span class="dot" style="background:var(${bad? '--critical': cache? '--neutral':'--good'})"></span>${ok}/${st.length} fuentes en vivo` + (cache?` · ${cache} en caché`:'') + (bad?` · ${bad} sin datos`:'');
+
+function assetColor(k){ return css(k==='btc'?'--btc':k==='gold'?'--gold':'--accent') || D.activos[k].color; }
+
+// ---------- tarjetas de activo
+function renderCards(){
+  $('#assets').innerHTML = keys.map(k=>{
+    const a = D.activos[k], r = REG[a.regimen]||REG['Sin datos'];
+    const pos = a.puntuacion==null?50:Math.max(0,Math.min(100,(a.puntuacion+100)/2));
+    const d7 = (a.puntuacion!=null && a.puntuacion_7d!=null) ? a.puntuacion-a.puntuacion_7d : null;
+    return `<div class="card asset ${k===sel?'sel':''}" data-k="${k}">
+      <div class="top"><span class="dot" style="background:${assetColor(k)};box-shadow:0 0 8px ${assetColor(k)}"></span><span class="name">${a.nombre}</span><span class="sym">${a.simbolo}</span>
+        <span class="px mono">${nf(a.precio, a.precio<100?2:0)} $</span></div>
+      <div class="chg">${[['24h','1d'],['7d','7d'],['30d','30d'],['90d','90d'],['1a','1a']].map(([l,c])=>`<span>${l} <b class="mono">${pct(a.cambio[c])}</b></span>`).join('')}</div>
+      <div class="scorebox"><div class="score mono">${sgn(a.puntuacion)}</div>
+        <div class="gauge"><div class="gbar"><div class="mk" style="left:${pos}%"></div></div>
+        <div class="gaxis"><span>−100 adverso</span><span>0</span><span>favorable +100</span></div></div></div>
+      <div class="regime" style="color:var(${r.c})"><span class="ic">${r.ic}</span>${a.regimen}
+        <small>${d7==null?'':` · ${d7>=0?'+':''}${nf(d7,0)} pts en 7 días`}</small></div>
+    </div>`;}).join('');
+  document.querySelectorAll('.asset').forEach(el=>el.onclick=()=>{sel=el.dataset.k;history.replaceState(null,'','#'+sel);renderAll();});
+}
+
+function cutoff(t, days){ if(!days) return t[0]; const d=new Date(t[t.length-1]); d.setDate(d.getDate()-days); return d.toISOString().slice(0,10); }
+function baseAxis(){ return {axisLine:{lineStyle:{color:css('--line')}},axisLabel:{color:css('--muted'),fontSize:11,fontFamily:'Share Tech Mono, monospace'},splitLine:{lineStyle:{color:css('--line'),opacity:.6}},axisTick:{show:false}}; }
+function tooltipBase(){ return {backgroundColor:css('--surface'),borderColor:css('--line'),textStyle:{color:css('--text'),fontSize:12},extraCssText:'border-radius:0;box-shadow:0 0 18px rgba(0,255,65,.25);font-family:"Share Tech Mono",monospace;background:rgba(2,10,5,.95)'}; }
+
+// ---------- gráfico principal: precio arriba, puntuación abajo (mismo eje X, ejes Y separados)
+function renderMain(){
+  const a = D.activos[sel]; $('#det-title').textContent = 'Detalle · '+a.nombre;
+  const H = a.historia, col = assetColor(sel);
+  const priceMap = new Map(H.precio.t.map((t,i)=>[t,H.precio.v[i]]));
+  const maMap = new Map(H.ma200.t.map((t,i)=>[t,H.ma200.v[i]]));
+  const scMap = new Map(H.puntuacion.t.map((t,i)=>[t,H.puntuacion.v[i]]));
+  const all = H.precio.t; const from = cutoff(all, rangeDays);
+  const T = all.filter(t=>t>=from);
+  $('#legend-main').innerHTML = `<span><i style="background:${col}"></i>Precio</span><span><i style="background:${css('--muted')};height:2px;border-top:2px dashed ${css('--muted')};background:none"></i>Media 200 días</span><span><i style="background:${css('--pos')}"></i>Puntuación a favor</span><span><i style="background:${css('--neg')}"></i>en contra</span>`;
+  const el = $('#chart-main'); let c = echarts.getInstanceByDom(el); if(c) c.dispose(); c = echarts.init(el); charts.push(c);
+  const u = D.umbral;
+  c.setOption({
+    animation:false, grid:[{left:64,right:16,top:10,height:'58%'},{left:64,right:16,top:'72%',bottom:28}],
+    tooltip:{...tooltipBase(),trigger:'axis',axisPointer:{type:'line',link:[{xAxisIndex:'all'}],lineStyle:{color:css('--muted')}},
+      formatter: ps => { const t=ps[0].axisValue; const p=priceMap.get(t), m=maMap.get(t), s=scMap.get(t);
+        return `<b>${new Date(t).toLocaleDateString('es-ES',{dateStyle:'medium'})}</b><br>Precio: <b class="mono">${nf(p,p<100?2:0)} $</b>`+(m?`<br>Media 200d: ${nf(m,0)} $`:'')+`<br>Puntuación: <b>${sgn(s)}</b>`; }},
+    axisPointer:{link:[{xAxisIndex:'all'}]},
+    xAxis:[{type:'category',data:T,gridIndex:0,...baseAxis(),axisLabel:{show:false},splitLine:{show:false}},
+           {type:'category',data:T,gridIndex:1,...baseAxis(),splitLine:{show:false},axisLabel:{color:css('--muted'),fontSize:11,formatter:v=>new Date(v).toLocaleDateString('es-ES',{month:'short',year:'2-digit'})}}],
+    yAxis:[{type:'log',min:v=>v.min*0.94,max:v=>v.max*1.04,gridIndex:0,...baseAxis(),axisLabel:{color:css('--muted'),fontSize:11,formatter:v=>nf(v,0)}},
+           {type:'value',min:-100,max:100,interval:50,gridIndex:1,...baseAxis()}],
+    series:[
+      {name:'Precio',type:'line',data:T.map(t=>priceMap.get(t)),showSymbol:false,lineStyle:{width:2,color:col,shadowColor:col,shadowBlur:10},itemStyle:{color:col},xAxisIndex:0,yAxisIndex:0},
+      {name:'Media 200d',type:'line',data:T.map(t=>maMap.get(t)??null),showSymbol:false,lineStyle:{width:1.5,type:'dashed',color:css('--muted')},itemStyle:{color:css('--muted')},xAxisIndex:0,yAxisIndex:0},
+      {name:'Puntuación',type:'bar',data:T.map(t=>{const v=scMap.get(t);return v==null?null:{value:v,itemStyle:{color:v>=0?css('--pos'):css('--neg'),opacity:Math.abs(v)>=u?1:.45}}}),
+        barCategoryGap:'0%',xAxisIndex:1,yAxisIndex:1,
+        markLine:{silent:true,symbol:'none',label:{show:false},lineStyle:{color:css('--muted'),type:'dotted',width:1},data:[{yAxis:u},{yAxis:-u}]}}
+    ]
+  });
+}
+
+// ---------- tabla de factores
+function relBadge(ic){ if(ic==null) return '<span class="rel">—</span>';
+  if(ic>=0.1) return `<span class="rel" title="Correlación ${nf(ic,2)}">✔︎ buena</span>`;
+  if(ic>=0.03) return `<span class="rel" title="Correlación ${nf(ic,2)}">~ media</span>`;
+  if(ic>-0.03) return `<span class="rel" title="Correlación ${nf(ic,2)}">· nula</span>`;
+  return `<span class="rel" title="Correlación ${nf(ic,2)}: últimamente funciona al revés">✖︎ invertida</span>`; }
+function sbar(v){ if(v==null) return '<div class="sbar"><div class="c"></div></div>';
+  const w = Math.min(Math.abs(v),2)/2*50; const left = v>=0?50:50-w;
+  return `<div class="sbar" title="${nf(v,2)}"><div class="c"></div><div class="v" style="left:${left}%;width:${Math.max(w,1)}%;background:var(${v>=0?'--pos':'--neg'})"></div></div>`; }
+function renderFactors(){
+  const a = D.activos[sel];
+  const main = a.factores.filter(f=>!f.contexto).sort((x,y)=>Math.abs(y.contrib)-Math.abs(x.contrib));
+  const ctx = a.factores.filter(f=>f.contexto);
+  const row = (f,i,isCtx)=>`<tr class="f ${isCtx?'ctx':''}" data-i="${i}">
+      <td><div class="fname">${f.nombre}</div><div class="fgroup">${f.grupo}${isCtx?' · contexto, no puntúa':''}</div></td>
+      <td class="lect hide-sm mono">${f.lectura}</td>
+      <td class="sig">${sbar(f.senal)}</td>
+      <td class="num mono">${isCtx?'—':sgn(f.contrib)}</td>
+      <td class="num hide-sm">${relBadge(f.ic2y)}</td></tr>`;
+  const list = [...main, ...ctx];
+  $('#factors tbody').innerHTML = list.map((f,i)=>row(f,i,f.contexto)).join('');
+  $('#factors tbody').querySelectorAll('tr.f').forEach(tr=>tr.onclick=()=>{
+    const nx = tr.nextElementSibling; if(nx && nx.classList.contains('why')){nx.remove();return;}
+    const f = list[+tr.dataset.i];
+    const w = document.createElement('tr'); w.className='why';
+    w.innerHTML = `<td colspan="5"><b>¿Por qué importa?</b> ${f.porque}<br><span class="mono" style="font-size:12px">Lectura: ${f.lectura} · z = ${f.z==null?'—':nf(f.z,2)} · peso ${nf(f.peso,2)} · fiabilidad histórica ${f.ic==null?'—':nf(f.ic,2)} (2 años: ${f.ic2y==null?'—':nf(f.ic2y,2)})</span><div class="spark"></div></td>`;
+    tr.after(w);
+    const c = echarts.init(w.querySelector('.spark')); charts.push(c);
+    c.setOption({animation:false,grid:{left:34,right:8,top:6,bottom:18},tooltip:{...tooltipBase(),trigger:'axis',valueFormatter:v=>nf(v,2)},
+      xAxis:{type:'category',data:f.hist.t,...baseAxis(),axisLabel:{color:css('--muted'),fontSize:10,formatter:v=>new Date(v).toLocaleDateString('es-ES',{month:'short',year:'2-digit'})}},
+      yAxis:{type:'value',min:-2,max:2,interval:2,...baseAxis()},
+      series:[{type:'line',name:'Señal',data:f.hist.v,showSymbol:false,lineStyle:{width:1.5,color:css('--text-2')},
+        areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:css('--pos')},{offset:.5,color:'transparent'},{offset:1,color:css('--neg')}]},opacity:.35}}]});
+  });
+}
+
+// ---------- validación
+function renderValidation(){
+  const a = D.activos[sel], v = a.validacion;
+  if(!v || !v.Todos){ $('#validation').innerHTML='<div class="empty">Sin histórico suficiente.</div>'; return; }
+  const rows = ['Favorable','Neutral','Adverso','Todos'].map(k=>{const r=v[k]; const reg=REG[k];
+    return `<tr><td>${reg?`<span style="color:var(${reg.c})">${reg.ic}</span> `:''}${k==='Todos'?'Siempre (referencia)':k}</td><td class="num mono">${nf(r.n)}</td><td class="num mono">${pct(r.media)}</td><td class="num mono">${r.acierto==null?'—':nf(r.acierto,0)+'%'}</td></tr>`}).join('');
+  const fav=v.Favorable, adv=v.Adverso, all=v.Todos;
+  let lect;
+  if(fav.media!=null && adv.media!=null && fav.media>adv.media && v.correlacion>0.08) lect = `El modelo <b>sí discrimina</b>: con entorno favorable el ${a.nombre.toLowerCase()} ha rendido de media ${pct(fav.media)} a 4 semanas frente a ${pct(adv.media)} en entorno adverso.`;
+  else if(v.correlacion>0.02) lect = `Señal <b>débil pero positiva</b> (correlación ${nf(v.correlacion,2)}). Úsala como contexto, combinada con tu análisis de precio.`;
+  else lect = `Para ${a.nombre} los factores macro <b>apenas anticipan</b> el precio a 4 semanas (correlación ${nf(v.correlacion,2)}): su precio lo mueven más flujos propios. Úsalo como termómetro del entorno, no como gatillo.`;
+  $('#validation').innerHTML = `<div style="font-weight:600;margin-bottom:2px">¿Funciona la puntuación?</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:8px">Rentabilidad a ${v.horizonte} días según el régimen · desde ${new Date(v.desde).toLocaleDateString('es-ES',{month:'short',year:'numeric'})}</div>
+    <table><thead><tr><th>Régimen</th><th class="num">Días</th><th class="num">Media</th><th class="num">% subidas</th></tr></thead><tbody>${rows}</tbody></table>
+    <p>${lect}</p><p style="font-size:11px;color:var(--muted)">Prueba hecha con los mismos datos con los que se diseñó el modelo: es orientativa y no garantiza resultados futuros.</p>`;
+}
+
+// ---------- macro
+function spark(el, s, color){
+  const c = echarts.init(el); charts.push(c);
+  const t = s.t.slice(-365/2*1|0), v = s.v.slice(-t.length);
+  c.setOption({animation:false,grid:{left:0,right:0,top:4,bottom:2},xAxis:{type:'category',show:false,data:t},yAxis:{type:'value',show:false,scale:true},
+    series:[{type:'line',data:v,showSymbol:false,lineStyle:{width:1.5,color,shadowColor:color,shadowBlur:6},areaStyle:{color,opacity:.1}}],
+    tooltip:{...tooltipBase(),trigger:'axis',formatter:p=>`${p[0].axisValue}<br><b class="mono">${auto(p[0].value)}</b>`}});
+}
+const MACRO_ORDER = ['liq_net','m2','real10','us10','us2','curva','be5y5','dxy','vix','hy','nfci','nasdaq','gold','silver','copper','au_ag','cu_au','cot_gold','btc','funding','stables','fng','mvrv','exch_in','hashrate','cpi','pce'];
+function renderMacro(){
+  const ix = k => {const i=MACRO_ORDER.indexOf(k); return i<0?999:i;};
+  const ks = Object.keys(D.macro).sort((a,b)=>ix(a)-ix(b));
+  $('#macro').innerHTML = ks.map(k=>{const m=D.macro[k];
+    const ch = RATES.includes(k) ? (m.cambio28==null?'—':(m.cambio28>=0?'+':'')+nf(m.cambio28*100,0)+' pb')
+      : (m.unidad.startsWith('%')||m.unidad==='pp') ? (m.cambio28==null?'—':(m.cambio28>=0?'+':'')+nf(m.cambio28,1)+' pp') : pct(m.cambio28_pct);
+    return `<div class="card mc" data-k="${k}"><div class="t">${m.nombre}</div><div class="v mono">${auto(m.valor)} <span style="font-size:11px;color:var(--muted);font-weight:400">${m.unidad}</span></div>
+      <div class="d">28 días: <span class="mono">${ch}</span> · ${new Date(m.fecha).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div><div class="sp"></div></div>`}).join('');
+  document.querySelectorAll('.mc').forEach(el=>{ spark(el.querySelector('.sp'), D.macro[el.dataset.k].hist, css('--accent')); el.onclick=()=>openModal(el.dataset.k); });
+}
+function openModal(k){
+  const m = D.macro[k]; $('#modal-title').textContent = m.nombre; $('#modal-sub').textContent = `${auto(m.valor)} ${m.unidad} · ${m.fecha}`;
+  $('#modal').classList.add('on');
+  const el = $('#chart-modal'); let c = echarts.getInstanceByDom(el); if(c) c.dispose(); c = echarts.init(el);
+  c.setOption({animation:false,grid:{left:60,right:16,top:16,bottom:60},tooltip:{...tooltipBase(),trigger:'axis',valueFormatter:v=>auto(v)+' '+m.unidad},
+    xAxis:{type:'category',data:m.hist.t,...baseAxis(),splitLine:{show:false}},yAxis:{type:'value',scale:true,...baseAxis(),axisLabel:{color:css('--muted'),formatter:v=>auto(v)}},
+    dataZoom:[{type:'inside',start:50,end:100},{type:'slider',start:50,end:100,height:22,bottom:12,borderColor:css('--line'),textStyle:{color:css('--muted')}}],
+    series:[{type:'line',data:m.hist.v,showSymbol:false,lineStyle:{width:2,color:css('--accent')},itemStyle:{color:css('--accent')}}]});
+}
+$('#modal-x').onclick = ()=>$('#modal').classList.remove('on');
+$('#modal').onclick = e=>{ if(e.target.id==='modal') $('#modal').classList.remove('on'); };
+
+// ---------- alertas y estado
+function renderAlerts(){
+  const al = (D.alertas||[]).slice().reverse();
+  $('#alerts').innerHTML = al.length ? al.map(a=>`<div class="al"><div class="when">${new Date(a.fecha).toLocaleString('es-ES',{dateStyle:'medium',timeStyle:'short'})}</div>${a.texto.replace(/\n/g,'<br>')}</div>`).join('')
+    : '<div class="empty">Todavía no ha saltado ninguna alerta. Cuando ocurra algo relevante aparecerá aquí y en tu Telegram.</div>';
+  $('#status tbody').innerHTML = Object.entries(D.estado_datos).map(([k,s])=>`<tr><td>${(D.macro[k]||{}).nombre||k}</td><td class="mono" style="font-size:12px">${s.fuente||'—'}</td><td class="mono" style="font-size:12px">${s.ultimo||'—'}</td>
+    <td>${s.ok? (s.fuente==='caché'?'<span style="color:var(--neutral)">● caché</span>':'<span style="color:var(--good)">✔︎ ok</span>') : `<span style="color:var(--critical)" title="${(s.error||'').replace(/"/g,'')}">✖︎ fallo</span>`}</td></tr>`).join('');
+}
+
+document.querySelectorAll('#range button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#range button').forEach(x=>x.classList.remove('on'));b.classList.add('on');rangeDays=+b.dataset.d;renderMain();});
+
+function renderAll(){ charts.splice(0).forEach(c=>{try{c.dispose()}catch(e){}}); renderCards(); renderMain(); renderFactors(); renderValidation(); renderMacro(); renderAlerts(); }
+renderAll();
+window.addEventListener('resize', ()=>charts.forEach(c=>{try{c.resize()}catch(e){}}));
+
+})();
+</script>
+</body>
+</html>
