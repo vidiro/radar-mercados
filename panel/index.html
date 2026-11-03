@@ -112,6 +112,36 @@ footer{color:var(--muted);font-size:12px;margin-top:30px;line-height:1.6}
 .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
 @media (max-width:600px){.sig{width:90px}.hide-sm{display:none}.score{font-size:28px}}
 
+
+/* ===== ANÁLISIS TÉCNICO ===== */
+#chart-tec{height:460px}
+@media (max-width:900px){#chart-tec{height:380px}}
+.tec-top{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px}
+@media (max-width:900px){.tec-top{grid-template-columns:1fr}}
+.tec-read{padding:16px 18px;font-size:13px;color:var(--text-2);line-height:1.6}
+.tec-read .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tec-read .chips span{font-size:11px;padding:3px 8px;border:1px solid var(--line);color:var(--text)}
+.lv{padding:14px 18px}
+.lv .row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.lv .row:last-child{border-bottom:0}
+.lv .tag{font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.mom{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:10px;margin-top:14px}
+.mo{padding:12px 14px;cursor:pointer;font-size:12.5px;color:var(--text-2);line-height:1.55}
+.mo:hover{border-color:var(--accent)}
+.mo .h{display:flex;gap:8px;align-items:baseline;margin-bottom:6px;color:var(--text);font-size:13px}
+.mo .h b{font-family:Orbitron,sans-serif;letter-spacing:.06em;font-size:12px}
+.mo .h .mv{margin-left:auto}
+.mo .sg{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.mo .sg span{font-size:10px;padding:2px 6px;border:1px solid var(--line)}
+.grade{font-size:10px;padding:2px 7px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.grade.fiable{color:var(--good);border-color:var(--good)}
+.grade.media{color:var(--pos);border-color:var(--pos)}
+.grade.nf{color:var(--muted)}
+.honest{padding:14px 18px;font-size:12.5px;color:var(--text-2);line-height:1.6;margin-top:14px}
+.honest b{color:var(--text)}
+.toggle{font:inherit;font-size:11px;background:transparent;border:1px solid var(--line);color:var(--text-2);padding:5px 10px;cursor:pointer;text-transform:uppercase}
+.toggle.on{border-color:var(--accent);color:var(--accent)}
+
 /* ===== CYBERPUNK / MATRIX ===== */
 #rain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.16}
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:40;
@@ -199,6 +229,28 @@ footer{border-top:1px dashed var(--line);padding-top:14px}
     <div>
       <div class="card val" id="validation"></div>
     </div>
+  </div>
+
+  <div class="section-title"><h2 id="tec-title">Análisis técnico</h2><span class="hint">Giros, agotamiento y rupturas · cada señal validada con el histórico del activo</span></div>
+  <div id="tec-wrap">
+    <div class="tec-top">
+      <div class="card tec-read" id="tec-read"></div>
+      <div class="card lv" id="tec-levels"></div>
+    </div>
+    <div class="card chartcard">
+      <div class="toolbar">
+        <div class="seg" id="range-tec"><button data-d="90">3M</button><button data-d="180" class="on">6M</button><button data-d="365">1A</button><button data-d="730">2A</button></div>
+        <button class="toggle" id="tec-all" title="Mostrar también las señales sin historial fiable">Todas las señales</button>
+        <span style="flex:1"></span>
+        <div class="legend"><span><i style="background:var(--pos)"></i>▲ señal alcista</span><span><i style="background:var(--neg)"></i>▼ señal bajista</span><span>◆ momento clave</span><span><i style="background:none;border-top:2px dashed var(--muted)"></i>soporte / resistencia</span></div>
+      </div>
+      <div id="chart-tec"></div>
+    </div>
+    <div class="section-title" style="margin-top:18px"><h2 style="font-size:12px">Momentos clave explicados</h2><span class="hint">Grandes giros de los últimos 3 años y qué señales técnicas había · toca uno para verlo en el gráfico</span></div>
+    <div class="mom" id="tec-mom"></div>
+    <div class="section-title" style="margin-top:18px"><h2 style="font-size:12px">¿Qué señales funcionan aquí?</h2><span class="hint">Acierto = % de veces que el precio fue en la dirección de la señal</span></div>
+    <div class="card tablewrap"><table id="tec-table"><thead><tr><th>Señal</th><th>Dir.</th><th class="num">Casos</th><th class="num hide-sm">5 días</th><th class="num">10 días</th><th class="num hide-sm">20 días</th><th class="num hide-sm" title="Movimiento medio a 10 días en la dirección de la señal">A favor 10d</th><th class="num">Veredicto</th></tr></thead><tbody></tbody></table></div>
+    <div class="card honest" id="tec-honest"></div>
   </div>
 
   <div class="section-title"><h2>Macro y mercado</h2><span class="hint">Toca una tarjeta para ver el gráfico grande</span></div>
@@ -376,6 +428,77 @@ function renderValidation(){
     <p>${lect}</p><p style="font-size:11px;color:var(--muted)">Prueba hecha con los mismos datos con los que se diseñó el modelo: es orientativa y no garantiza resultados futuros.</p>`;
 }
 
+// ---------- análisis técnico
+let tecDays = 180, tecAll = false, tecFocus = null;
+const minus = t => t.slice(0,2)===t.slice(0,2).toUpperCase() ? t : t[0].toLowerCase()+t.slice(1);
+function gradeBadge(g){ const cls = g==='fiable'?'fiable':g==='media'?'media':'nf'; const txt = g==='fiable'?'✔ fiable':g==='media'?'~ media':g==='pocos casos'?'pocos casos':'✖ no fiable'; return `<span class="grade ${cls}">${txt}</span>`; }
+function renderTech(){
+  const a = D.activos[sel], T = a.tecnico;
+  $('#tec-title').textContent = 'Análisis técnico · '+a.nombre;
+  if(!T){ $('#tec-wrap').innerHTML = '<div class="card empty">Sin velas disponibles para este activo.</div>'; return; }
+  const L = T.lectura, N = T.niveles;
+  $('#tec-read').innerHTML = `<div style="font-weight:600;color:var(--text);margin-bottom:6px">Lectura técnica actual</div>${L.texto}
+    <div class="chips"><span>RSI ${nf(L.rsi,0)}</span><span>vs media 50: ${pct(L.dist_ma50)}</span><span>vs media 200: ${pct(L.dist_ma200)}</span><span>presión técnica ${sgn(L.presion)}</span></div>`;
+  const px = a.precio;
+  $('#tec-levels').innerHTML = `<div style="font-weight:600;margin-bottom:6px">Niveles clave</div>` +
+    [...N.resistencias.slice().reverse().map(x=>`<div class="row"><span class="tag" style="color:var(--neg)">Resistencia</span><span class="mono">${nf(x.nivel, x.nivel<100?2:0)} <span style="color:var(--muted)">(${pct((x.nivel/px-1)*100)} · ${x.toques} toques)</span></span></div>`),
+     `<div class="row"><span class="tag" style="color:var(--accent)">Precio</span><span class="mono" style="color:var(--text)">${nf(px, px<100?2:0)}</span></div>`,
+     ...N.soportes.map(x=>`<div class="row"><span class="tag" style="color:var(--pos)">Soporte</span><span class="mono">${nf(x.nivel, x.nivel<100?2:0)} <span style="color:var(--muted)">(${pct((x.nivel/px-1)*100)} · ${x.toques} toques)</span></span></div>`)].join('') +
+    `<div style="font-size:11px;color:var(--muted);margin-top:6px">Calculados con los giros de los últimos ~400 días, agrupando los que están a menos de 0,8 ATR (${nf(N.atr, N.atr<100?2:0)}).</div>`;
+  renderTecChart();
+  $('#tec-mom').innerHTML = T.momentos.slice().reverse().map((m,i)=>`<div class="card mo" data-f="${m.fecha}">
+     <div class="h"><b style="color:var(${m.tipo==='suelo'?'--pos':'--neg'})">${m.tipo==='suelo'?'▲ SUELO':'▼ TECHO'}</b><span class="mono">${new Date(m.fecha).toLocaleDateString('es-ES',{dateStyle:'medium'})}</span>
+       <span class="mv mono" style="color:var(${m.movimiento>=0?'--pos':'--neg'})">${pct(m.movimiento)} en ${m.dias}d${m.en_curso?' ⏳':''}</span></div>
+     ${(x=>x[0].toUpperCase()+x.slice(1))(m.explicacion.replace(/^[^:]+: /,''))}
+     <div class="sg">${m.senales.map(s=>`<span>${s.nombre}${s.grado==='fiable'||s.grado==='media'?' ✔':''}</span>`).join('')||'<span>sin señal técnica previa</span>'}</div></div>`).join('');
+  document.querySelectorAll('.mo').forEach(el=>el.onclick=()=>{ tecFocus = el.dataset.f; renderTecChart(); document.getElementById('chart-tec').scrollIntoView({behavior:'smooth',block:'center'}); });
+  $('#tec-table tbody').innerHTML = T.tabla.map(r=>`<tr class="f" title="${r.idea.replace(/"/g,'')}"><td><div class="fname">${r.nombre}</div><div class="fgroup">${r.familia==='giro'?'giro / agotamiento':'continuación'}</div></td>
+     <td style="color:var(${r.dir>0?'--pos':'--neg'})">${r.dir>0?'▲ alcista':'▼ bajista'}</td><td class="num mono">${r.n}</td>
+     <td class="num mono hide-sm">${r.acierto5==null?'—':nf(r.acierto5,0)+'%'}</td><td class="num mono"><b>${r.acierto10==null?'—':nf(r.acierto10,0)+'%'}</b></td><td class="num mono hide-sm">${r.acierto20==null?'—':nf(r.acierto20,0)+'%'}</td>
+     <td class="num mono hide-sm">${pct(r.media10)}</td><td class="num">${gradeBadge(r.grado)}</td></tr>`).join('');
+  document.querySelectorAll('#tec-table tr.f').forEach(tr=>tr.onclick=()=>{ const nx=tr.nextElementSibling; if(nx&&nx.classList.contains('why')){nx.remove();return;} const w=document.createElement('tr'); w.className='why'; w.innerHTML=`<td colspan="8">${tr.title}</td>`; tr.after(w); });
+  const C = T.cobertura;
+  $('#tec-honest').innerHTML = `<b>Cómo leer esto.</b> De los ${C.giros} grandes giros de ${a.nombre} (movimientos de más del ${nf(C.umbral_pct,1)}%), el <b>${nf(C.pct,0)}%</b> tuvo alguna señal técnica cerca.
+    Pero de las ${C.senales_giro} señales de giro emitidas, solo el <b>${nf(C.precision,0)}%</b> coincidió con un gran giro: la mayoría son giros pequeños o falsos.
+    Por eso el radar solo te avisa de las señales con veredicto <b>fiable</b> o <b>media</b> en este activo, y marca con ⭐ cuando además coinciden con el entorno macro.
+    Las estadísticas se calculan con el mismo histórico: son orientativas, no una garantía.`;
+}
+function renderTecChart(){
+  const a = D.activos[sel], T = a.tecnico; if(!T) return;
+  const V = T.velas, idx = new Map(V.t.map((t,i)=>[t,i]));
+  let i0 = Math.max(0, V.t.length - tecDays), i1 = V.t.length - 1;
+  if(tecFocus && idx.has(tecFocus)){ const k = idx.get(tecFocus); i0 = Math.max(0,k-75); i1 = Math.min(V.t.length-1,k+75); }
+  const t = V.t.slice(i0,i1+1);
+  const data = t.map((_,j)=>[V.o[i0+j],V.c[i0+j],V.l[i0+j],V.h[i0+j]]);
+  const ok = e => tecAll || e.grado==='fiable' || e.grado==='media';
+  const evs = T.eventos.filter(e=>idx.has(e.fecha) && idx.get(e.fecha)>=i0 && idx.get(e.fecha)<=i1);
+  const byDay = {}; evs.forEach(e=>{(byDay[e.fecha]=byDay[e.fecha]||[]).push(e)});
+  const marks = evs.filter(ok).map(e=>{ const k=idx.get(e.fecha); const strong = e.grado==='fiable'||e.grado==='media';
+    return {coord:[e.fecha, e.dir>0? V.l[k]: V.h[k]], symbol:'triangle', symbolRotate: e.dir>0?0:180, symbolSize: strong?13:8, symbolOffset:[0, e.dir>0?14:-14],
+      itemStyle:{color: css(e.dir>0?'--pos':'--neg'), opacity: strong?1:.45, shadowBlur: strong?8:0, shadowColor: css(e.dir>0?'--pos':'--neg')}, value:''}; });
+  T.momentos.filter(m=>idx.has(m.fecha) && idx.get(m.fecha)>=i0 && idx.get(m.fecha)<=i1).forEach(m=>{ const k=idx.get(m.fecha);
+    marks.push({coord:[m.fecha, m.tipo==='suelo'? V.l[k]: V.h[k]], symbol:'diamond', symbolSize: m.fecha===tecFocus?18:12, symbolOffset:[0, m.tipo==='suelo'?30:-30],
+      itemStyle:{color:'transparent', borderColor: css('--accent'), borderWidth: 2, shadowBlur:8, shadowColor: css('--accent')}, value:''}); });
+  const lines = [...T.niveles.soportes.map(x=>({yAxis:x.nivel, lineStyle:{color:css('--pos'),type:'dashed',opacity:.6}})), ...T.niveles.resistencias.map(x=>({yAxis:x.nivel, lineStyle:{color:css('--neg'),type:'dashed',opacity:.6}}))];
+  const el = $('#chart-tec'); let c = echarts.getInstanceByDom(el); if(c) c.dispose(); c = echarts.init(el); charts.push(c);
+  const momMap = Object.fromEntries(T.momentos.map(m=>[m.fecha,m]));
+  c.setOption({animation:false, grid:{left:64,right:16,top:16,bottom:30},
+    tooltip:{...tooltipBase(), trigger:'axis', axisPointer:{type:'cross', lineStyle:{color:css('--muted')}},
+      formatter: ps => { const p = ps.find(x=>x.seriesType==='candlestick') || ps[0]; const d = p.axisValue; const [o,cl,lo,hi] = p.data.slice(-4);
+        let h = `<b>${new Date(d).toLocaleDateString('es-ES',{dateStyle:'medium'})}</b><br>A ${nf(o,0)} · M ${nf(hi,0)} · m ${nf(lo,0)} · C <b>${nf(cl,0)}</b>`;
+        (byDay[d]||[]).filter(ok).forEach(e=>{ h += `<br><span style="color:${css(e.dir>0?'--pos':'--neg')}">${e.dir>0?'▲':'▼'} ${e.nombre}</span> · ${e.grado}${e.acierto!=null?` (${nf(e.acierto,0)}%)`:''}<br><span style="color:${css('--muted')};font-size:11px">${e.detalle}</span>`; });
+        if(momMap[d]) h += `<br><span style="color:${css('--accent')}">◆ ${momMap[d].tipo.toUpperCase()}: ${pct(momMap[d].movimiento)} después</span>`;
+        return h; }},
+    xAxis:{type:'category', data:t, ...baseAxis(), splitLine:{show:false}, axisLabel:{color:css('--muted'),fontSize:11,fontFamily:'Share Tech Mono, monospace',formatter:v=>new Date(v).toLocaleDateString('es-ES',{day:'numeric',month:'short'})}},
+    yAxis:{type:'value', scale:true, ...baseAxis(), axisLabel:{color:css('--muted'),fontSize:11,fontFamily:'Share Tech Mono, monospace',formatter:v=>nf(v,0)}},
+    dataZoom:[{type:'inside'}],
+    series:[{type:'candlestick', name:a.nombre, data, barMaxWidth:10,
+      itemStyle:{color:css('--pos'), color0:css('--neg'), borderColor:css('--pos'), borderColor0:css('--neg')},
+      markPoint:{data:marks, label:{show:false}, silent:false}, markLine:{symbol:'none', silent:true, label:{show:false}, data:lines}}]});
+}
+document.querySelectorAll('#range-tec button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#range-tec button').forEach(x=>x.classList.remove('on'));b.classList.add('on');tecDays=+b.dataset.d;tecFocus=null;renderTecChart();});
+$('#tec-all').onclick=()=>{tecAll=!tecAll;$('#tec-all').classList.toggle('on',tecAll);renderTecChart();};
+
 // ---------- macro
 function spark(el, s, color){
   const c = echarts.init(el); charts.push(c);
@@ -418,7 +541,7 @@ function renderAlerts(){
 
 document.querySelectorAll('#range button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#range button').forEach(x=>x.classList.remove('on'));b.classList.add('on');rangeDays=+b.dataset.d;renderMain();});
 
-function renderAll(){ charts.splice(0).forEach(c=>{try{c.dispose()}catch(e){}}); renderCards(); renderMain(); renderFactors(); renderValidation(); renderMacro(); renderAlerts(); }
+function renderAll(){ charts.splice(0).forEach(c=>{try{c.dispose()}catch(e){}}); renderCards(); renderMain(); renderFactors(); renderValidation(); tecFocus=null; renderTech(); renderMacro(); renderAlerts(); }
 renderAll();
 window.addEventListener('resize', ()=>charts.forEach(c=>{try{c.resize()}catch(e){}}));
 
