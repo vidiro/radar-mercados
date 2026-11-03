@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .engine import AssetResult
+from .technical import minus
 
 log = logging.getLogger("radar")
 EMO = {"Favorable": "🟢", "Neutral": "⚪️", "Adverso": "🔴", "Sin datos": "❔"}
@@ -148,6 +149,7 @@ class Alerter:
                                   f"pero el entorno es favorable ({fmt_num(score, 0)}). Posible oportunidad.",
                                   cooldown_days=7)
 
+            self._tecnicas(k, a, reg)
             self.state["previo"][k] = {"score": None if score is None else float(score), "sobre_ma200": above}
 
         # ----- Alertas macro (una vez, no por activo)
@@ -191,6 +193,41 @@ class Alerter:
         hist.extend(self.out)
         del hist[:-100]
         return self.out
+
+    def _tecnicas(self, k: str, a: AssetResult, reg: str):
+        from .technical import CATALOGO, H_PRINCIPAL, _fmt, minus
+
+        r = self.on("senal_tecnica")
+        R = a.tecnico
+        if not r or R is None:
+            return
+        last_i = len(R.df) - 1
+        ic = ICON.get(k, "•")
+        for e in R.eventos:
+            if e.i < last_i - 1:      # velas cerradas más recientes (por si una ejecución se saltó)
+                continue
+            st = R.stats.get(f"{e.tipo}:{e.dir}", {})
+            if st.get("grado") not in r.get("grados", ["fiable", "media"]):
+                continue
+            meta = CATALOGO[e.tipo]
+            if r.get("solo_giros") and meta["tipo"] != "giro":
+                continue
+            conf = (e.dir > 0 and reg == "Favorable") or (e.dir < 0 and reg == "Adverso")
+            contra = (e.dir > 0 and reg == "Adverso") or (e.dir < 0 and reg == "Favorable")
+            lado = "alcista" if e.dir > 0 else "bajista"
+            nv = R.niveles
+            sop = nv["soportes"][0]["nivel"] if nv["soportes"] else None
+            res = nv["resistencias"][0]["nivel"] if nv["resistencias"] else None
+            txt = (f"📐 {ic} <b>{a.cfg['name']}: {minus(meta['nombre'])} ({lado})</b>"
+                   + ("\n⭐ <b>Confluencia</b>: el entorno macro también es " + reg.lower() if conf else
+                      f"\n⚠️ Ojo: el entorno macro es {reg.lower()}, va en contra" if contra else "")
+                   + f"\n{e.detalle}"
+                   + f"\n📊 En el histórico de {a.cfg['name']}: {st.get(f'acierto{H_PRINCIPAL}', 0):.0f}% de acierto a "
+                     f"{H_PRINCIPAL} días ({st.get(f'n{H_PRINCIPAL}', 0)} casos), movimiento medio a favor "
+                     f"{fmt_pct(st.get(f'media{H_PRINCIPAL}'))} · señal {st['grado']}"
+                   + f"\n💡 {meta['idea']}"
+                   + (f"\n🎯 Soporte {_fmt(sop)} · Resistencia {_fmt(res)}" if sop and res else ""))
+            self.fire(f"tec:{k}:{e.tipo}:{e.dir}:{e.fecha.date()}", txt, nivel="alta" if conf else "info")
 
     def _z_alert(self, rule, serie, title, up_txt, down_txt, assets, signo):
         r = self.on(rule)
@@ -264,4 +301,13 @@ def asset_text(k: str, a: dict, short: bool = False) -> str:
         ctx = [f for f in a["factores"] if f["contexto"]]
         if ctx:
             body.append("ℹ️ Contexto: " + " · ".join(f"{f['nombre']} {f['lectura']}" for f in ctx))
+    tec = a.get("tecnico")
+    if tec:
+        L = tec["lectura"]
+        if short:
+            buenas = [e for e in L["recientes"] if e["grado"] in ("fiable", "media")]
+            body.append(f"📐 RSI {L['rsi']:.0f}" + (f" · {minus(buenas[0]['nombre'])} "
+                        f"{'alcista' if buenas[0]['dir'] > 0 else 'bajista'}" if buenas else ""))
+        else:
+            body.append("📐 <b>Técnico:</b> " + L["texto"])
     return head + ("\n" + "\n".join(body) if body else "")
