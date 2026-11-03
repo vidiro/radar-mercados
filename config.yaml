@@ -77,6 +77,7 @@ assets:
     name: Bitcoin
     symbol: BTC
     price: btc
+    ohlc: {source: coinbase, id: BTC-USD}     # velas diarias para el análisis técnico
     color: "#F7931A"
     factors:
       - {serie: liq_net, transform: chg, dias: 28, signo: 1, peso: 2.0, grupo: Liquidez,
@@ -110,6 +111,7 @@ assets:
     name: Oro
     symbol: XAU
     price: gold
+    ohlc: {source: yahoo, id: "GC=F"}
     color: "#D4AF37"
     factors:
       - {serie: real10, transform: chg, dias: 28, signo: -1, peso: 2.0, grupo: Dólar y tipos,
@@ -147,3 +149,6 @@ alerts:
   funding_extremo:    {activa: true, alto: 30, bajo: -5, enfriamiento_dias: 3}
   miedo_codicia:      {activa: true, miedo: 15, codicia: 85, enfriamiento_dias: 3}
   dxy_brusco:         {activa: true, z: 2.0, enfriamiento_dias: 5}
+  # Señales técnicas: solo avisa de las que han funcionado en el histórico de ese activo.
+  # grados posibles: fiable, media, "no fiable", "pocos casos"
+  senal_tecnica:      {activa: true, grados: [fiable, media], solo_giros: false}

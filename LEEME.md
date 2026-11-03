@@ -89,6 +89,32 @@ propios (ETF, apalancamiento). Úsalo como termómetro, no como gatillo.
 
 ---
 
+## Análisis técnico (giros y agotamiento)
+
+Cada día, con las velas cerradas, el radar busca señales técnicas clásicas inspiradas en Murphy,
+Edwards & Magee y Wyckoff:
+
+- **Giros y agotamiento:** divergencias RSI, salida de sobrecompra/sobreventa, reentrada en bandas de
+  Bollinger, rechazo en soportes y resistencias, dobles suelos y techos, clímax de volumen (Wyckoff),
+  sobreextensión respecto a la media de 50 y velas de giro (envolventes, martillos, estrellas fugaces).
+- **Continuación:** rupturas del rango de 55 días, salida de compresión de volatilidad y cruce de las
+  medias de 50 y 200.
+
+**Cada señal se valida con el histórico de cada activo.** Se mide su % de acierto a 5, 10 y 20 días y el
+resultado se compara con lo que habría hecho el precio de todas formas. Con eso recibe un veredicto:
+*fiable*, *media*, *no fiable* o *pocos casos*. **Solo las fiables y las medias te llegan por Telegram.**
+Si además coinciden con el entorno macro, el aviso lleva ⭐ **Confluencia**.
+
+En el panel verás:
+- Las velas con las señales marcadas (▲ ▼) y los grandes giros (◆).
+- Los soportes y resistencias actuales.
+- Los **momentos clave explicados**: qué señales había antes de cada gran suelo o techo de los últimos 3 años.
+- La tabla con qué señales funcionan de verdad en cada activo.
+
+Para cambiar qué grados te llegan al móvil, o para recibir solo los giros, usa `alerts.senal_tecnica` en `config.yaml`.
+
+---
+
 ## Personalizar
 
 Todo está en **`config.yaml`** (se edita desde la web de GitHub con el lápiz ✏️):
