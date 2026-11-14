@@ -1,0 +1,151 @@
+{
+ "ultima_alerta": {
+  "tipo_real_brusco:down": "2026-11-09",
+  "tec:gold:rsi_giro:1:2026-11-02": "2026-11-05",
+  "movimiento:gold:2026-11-04": "2026-11-05",
+  "movimiento:btc:2026-11-05": "2026-11-05",
+  "tec:btc:rebote_nivel:-1:2026-11-05": "2026-11-08",
+  "regimen:gold:Favorable": "2026-11-09",
+  "regimen:gold:Neutral": "2026-11-10",
+  "ma200:btc:False": "2026-11-12",
+  "movimiento:gold:2026-11-12": "2026-11-12",
+  "tec:btc:ruptura:-1:2026-11-12": "2026-11-14",
+  "regimen:gold:Adverso": "2026-11-13",
+  "fng:miedo": "2026-11-14",
+  "movimiento:btc:2026-11-14": "2026-11-14"
+ },
+ "regimenes": {
+  "btc": "Neutral",
+  "gold": "Adverso"
+ },
+ "previo": {
+  "btc": {
+   "score": -16.5,
+   "sobre_ma200": false
+  },
+  "gold": {
+   "score": -38.4,
+   "sobre_ma200": false
+  }
+ },
+ "historial": [
+  {
+   "clave": "tipo_real_brusco:down",
+   "texto": "📉 <b>Tipo real a 10 años</b>: caída brusca (impulso para el oro)\n-29 pb en 28 días (z=-2.0)",
+   "nivel": "info",
+   "fecha": "2026-11-03T23:11Z"
+  },
+  {
+   "clave": "tec:gold:rsi_giro:1:2026-11-02",
+   "texto": "📐 🥇 <b>Oro: RSI sale de zona extrema (alcista)</b>\nRSI sale de sobreventa (28 → 36)\n📊 En el histórico de Oro: 78% de acierto a 10 días (9 casos), movimiento medio a favor +1,9% · señal fiable\n💡 El RSI estaba en sobreventa (<30) o sobrecompra (>70) y vuelve a la zona normal: el exceso empieza a corregirse.\n🎯 Soporte 3.962 · Resistencia 4.095",
+   "nivel": "info",
+   "fecha": "2026-11-03T23:54Z"
+  },
+  {
+   "clave": "movimiento:gold:2026-11-04",
+   "texto": "🥇 <b>Oro: movimiento fuera de lo normal</b>\n+2,9% en el día (3.0× su volatilidad habitual)",
+   "nivel": "alta",
+   "fecha": "2026-11-04T10:49Z"
+  },
+  {
+   "clave": "movimiento:gold:2026-11-04",
+   "texto": "🥇 <b>Oro: movimiento fuera de lo normal</b>\n+3,4% en el día (3.5× su volatilidad habitual)",
+   "nivel": "alta",
+   "fecha": "2026-11-04T23:57Z"
+  },
+  {
+   "clave": "tec:gold:rsi_giro:1:2026-11-02",
+   "texto": "📐 🥇 <b>Oro: RSI sale de zona extrema (alcista)</b>\nRSI sale de sobreventa (28 → 36)\n📊 En el histórico de Oro: 78% de acierto a 10 días (9 casos), movimiento medio a favor +1,9% · señal fiable\n💡 El RSI estaba en sobreventa (&lt;30) o sobrecompra (&gt;70) y vuelve a la zona normal: el exceso empieza a corregirse.\n🎯 Soporte 3.522 · Resistencia 3.962",
+   "nivel": "info",
+   "fecha": "2026-11-04T23:57Z"
+  },
+  {
+   "clave": "movimiento:btc:2026-11-05",
+   "texto": "₿ <b>Bitcoin: movimiento fuera de lo normal</b>\n-5,8% en el día (3.3× su volatilidad habitual)",
+   "nivel": "alta",
+   "fecha": "2026-11-05T21:29Z"
+  },
+  {
+   "clave": "tec:btc:rebote_nivel:-1:2026-11-05",
+   "texto": "📐 ₿ <b>Bitcoin: rechazo en soporte/resistencia (bajista)</b>\nToca la resistencia de 81.480 (giro del 28/08/2026) y cierra abajo\n📊 En el histórico de Bitcoin: 56% de acierto a 10 días (84 casos), movimiento medio a favor +1,6% · señal media\n💡 El precio toca un nivel donde antes giró y lo rechaza, cerrando lejos del extremo de la vela: los compradores (o vendedores) defienden la zona.\n🎯 Soporte 75.229 · Resistencia 81.224",
+   "nivel": "info",
+   "fecha": "2026-11-06T01:48Z"
+  },
+  {
+   "clave": "tec:btc:rebote_nivel:-1:2026-11-05",
+   "texto": "📐 ₿ <b>Bitcoin: rechazo en soporte/resistencia (bajista)</b>\nToca la resistencia de 81.480 (giro del 28/08/2026) y cierra abajo\n📊 En el histórico de Bitcoin: 56% de acierto a 10 días (84 casos), movimiento medio a favor +1,6% · señal media\n💡 El precio toca un nivel donde antes giró y lo rechaza, cerrando lejos del extremo de la vela: los compradores (o vendedores) defienden la zona.\n🎯 Soporte 75.229 · Resistencia 81.224",
+   "nivel": "info",
+   "fecha": "2026-11-07T01:54Z"
+  },
+  {
+   "clave": "tec:btc:rebote_nivel:-1:2026-11-05",
+   "texto": "📐 ₿ <b>Bitcoin: rechazo en soporte/resistencia (bajista)</b>\nToca la resistencia de 81.480 (giro del 28/08/2026) y cierra abajo\n📊 En el histórico de Bitcoin: 56% de acierto a 10 días (84 casos), movimiento medio a favor +1,6% · señal media\n💡 El precio toca un nivel donde antes giró y lo rechaza, cerrando lejos del extremo de la vela: los compradores (o vendedores) defienden la zona.\n🎯 Soporte 75.229 · Resistencia 81.224",
+   "nivel": "info",
+   "fecha": "2026-11-07T23:57Z"
+  },
+  {
+   "clave": "regimen:gold:Favorable",
+   "texto": "🥇 <b>Oro: cambio de régimen</b>\n⚪️ Neutral → 🟢 <b>Favorable</b> (puntuación 26)\n✅ A favor: Rendimiento real 10A (TIPS), Bono EE. UU. 2A, VIX (miedo bolsa)\n❌ En contra: Tendencia del oro, Inflación esperada 5y5y",
+   "nivel": "alta",
+   "fecha": "2026-11-09T01:58Z"
+  },
+  {
+   "clave": "tipo_real_brusco:down",
+   "texto": "📉 <b>Tipo real a 10 años</b>: caída brusca (impulso para el oro)\n-31 pb en 28 días (z=-2.1)",
+   "nivel": "info",
+   "fecha": "2026-11-09T01:58Z"
+  },
+  {
+   "clave": "regimen:gold:Neutral",
+   "texto": "🥇 <b>Oro: cambio de régimen</b>\n🟢 Favorable → ⚪️ <b>Neutral</b> (puntuación 20)\n✅ A favor: Rendimiento real 10A (TIPS), Bono EE. UU. 2A, VIX (miedo bolsa)\n❌ En contra: Tendencia del oro, Inflación esperada 5y5y",
+   "nivel": "alta",
+   "fecha": "2026-11-10T03:30Z"
+  },
+  {
+   "clave": "ma200:btc:False",
+   "texto": "₿ <b>Bitcoin pierde la media de 200 días</b>\nPrecio 72.869 $ · media 73.084 $",
+   "nivel": "info",
+   "fecha": "2026-11-12T12:37Z"
+  },
+  {
+   "clave": "movimiento:gold:2026-11-12",
+   "texto": "🥇 <b>Oro: movimiento fuera de lo normal</b>\n-2,8% en el día (2.6× su volatilidad habitual)",
+   "nivel": "alta",
+   "fecha": "2026-11-12T20:28Z"
+  },
+  {
+   "clave": "tec:btc:ruptura:-1:2026-11-12",
+   "texto": "📐 ₿ <b>Bitcoin: ruptura de rango de 55 días (bajista)</b>\nCierre en 71.370 pierde el mínimo de 55 días (72.643) con volumen 1.7× la media\n📊 En el histórico de Bitcoin: 54% de acierto a 10 días (24 casos), movimiento medio a favor +1,5% · señal media\n💡 El precio supera el máximo (o pierde el mínimo) de casi 3 meses con volumen: arranque o continuación de tendencia (regla de las &#x27;tortugas&#x27;).\n🎯 Soporte 65.873 · Resistencia 71.486",
+   "nivel": "info",
+   "fecha": "2026-11-13T01:29Z"
+  },
+  {
+   "clave": "regimen:gold:Adverso",
+   "texto": "🥇 <b>Oro: cambio de régimen</b>\n⚪️ Neutral → 🔴 <b>Adverso</b> (puntuación -27)\n✅ A favor: Posición neta especuladores oro\n❌ En contra: Tendencia del oro, Índice dólar (DXY), Inflación esperada 5y5y",
+   "nivel": "alta",
+   "fecha": "2026-11-13T01:29Z"
+  },
+  {
+   "clave": "tec:btc:ruptura:-1:2026-11-12",
+   "texto": "📐 ₿ <b>Bitcoin: ruptura de rango de 55 días (bajista)</b>\nCierre en 71.370 pierde el mínimo de 55 días (72.643) con volumen 1.7× la media\n📊 En el histórico de Bitcoin: 54% de acierto a 10 días (24 casos), movimiento medio a favor +1,5% · señal media\n💡 El precio supera el máximo (o pierde el mínimo) de casi 3 meses con volumen: arranque o continuación de tendencia (regla de las &#x27;tortugas&#x27;).\n🎯 Soporte 65.873 · Resistencia 71.486",
+   "nivel": "info",
+   "fecha": "2026-11-14T03:09Z"
+  },
+  {
+   "clave": "fng:miedo",
+   "texto": "😱 <b>Miedo extremo en cripto: 13/100</b>\nHistóricamente, zonas de capitulación y oportunidad (contrarian).",
+   "nivel": "info",
+   "fecha": "2026-11-14T03:09Z"
+  },
+  {
+   "clave": "movimiento:btc:2026-11-14",
+   "texto": "₿ <b>Bitcoin: movimiento fuera de lo normal</b>\n-5,4% en el día (2.7× su volatilidad habitual)",
+   "nivel": "alta",
+   "fecha": "2026-11-14T21:26Z"
+  }
+ ],
+ "ultima_ejecucion": "2026-11-14T22:25+01:00",
+ "tg_offset": 23346500,
+ "chat_id": "1523053971",
+ "ultimo_resumen": "2026-11-14"
+}
